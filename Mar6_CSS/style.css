@@ -1,0 +1,26 @@
+h3{
+    color:darkblue
+}
+h3{
+    font-style: italic;
+}
+h3{
+    font-family: 'Times New Roman', Times, serif;
+}
+h1{
+    background-color: aquamarine;
+    font-size: 100px;
+}
+h3 {
+    background-color: aquamarine;
+    font-size: 20px;
+}
+.box1{
+    font-size: 50px;
+}
+.hello h3{
+    background-color: blueviolet;
+}
+.container h1 {
+    color: #333;
+  }
