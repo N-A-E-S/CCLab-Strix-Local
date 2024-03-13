@@ -1,12 +1,26 @@
 //Reference of background image: https://www.youtube.com/watch?v=MIq1QW0ycI8&t=247s
 var img;
+var gameStarted = false; // Track game state
+var startButton;
+var startSlime; // Store the start slime
 function preload() {
     print("lo123123ed");
     img = loadImage('img.png');
+    myfont = loadFont('MZPXorig.ttf');
 }
 function setup() {
     let canvas = createCanvas(800, 500);
-    canvas.id("p5-canvas")
+    canvas.parent("p5-canvas-container")
+    startButton = createButton('Start');
+    startButton.size(100, 50); // Set button size
+    var canvasPosition = canvas.position();
+    startButton.position(canvasPosition.x + windowWidth / 2 - 50, canvasPosition.y + windowHeight / 2 - 25);
+    startButton.mousePressed(startGame);
+
+}
+function startGame() {
+    gameStarted = true;
+    startButton.hide(); // Hide the button when game starts
 }
 class creature//class for the creature, pixel slime shape
 {
@@ -182,65 +196,72 @@ function draw() {
     background(255);
     imageMode(CENTER);
     image(img, 400, 250, 800, 500);
-    textSize(20);
-    fill(0);
-    text("Press b to create a slime", 15, 30);
-    text("Remember: the more slimes you have, the faster they die", 15, 50)
-    text("New slimes will inherit the name and color from both of their parents", 15, 70);
-    text("current slimes: " + alllife.length, 15, 90);
-    if (keyIsPressed === true)
-        if (key == 'b' && newdeploy == false) {
-            r = random(255);
-            g = random(255);
-            b = random(255);
-            let new_name = name(3, null)
-            console.log(new_name)
-            alllife.push(new creature(mouseX, mouseY, 1, r, g, b, new_name));
-            newdeploy = true;
-        }
-    if (newdeploy == true) {
-        deployBreak++;
+    if (!gameStarted) {
+        textFont(myfont);
+        textSize(20);
+        fill(0);
+        text("Press b to create a slime", 15, 30);
+        text("Remember: the more slimes you have, the faster they die", 15, 50)
+        text("New slimes will inherit the name and color from both of their parents", 15, 70);
+        text("current slimes: " + alllife.length, 15, 90);
+        startSlime = new Creature(400, 300, 1, 0, 255, 0, "PIXEL");
+        startSlime.display();
     }
-    if (deployBreak > 50) {
-        newdeploy = false;
-        deployBreak = 0;
-    }
-    for (var i = 0; i < alllife.length; i++) {
-        alllife[i].display();
-        alllife[i].lifetime++;
-        alllife[i].hp -= 0.05 + alllife.length * 0.001;
-        alllife[i].hunger -= 0.05;
-        alllife[i].move();
-        alllife[i].step();
-        if (alllife[i].jump == false) {
-            alllife[i].jumpbreak++;
+    else {
+        if (keyIsPressed === true)
+            if (key == 'b' && newdeploy == false) {
+                r = random(255);
+                g = random(255);
+                b = random(255);
+                let new_name = name(3, null)
+                console.log(new_name)
+                alllife.push(new creature(mouseX, mouseY, 1, r, g, b, new_name));
+                newdeploy = true;
+            }
+        if (newdeploy == true) {
+            deployBreak++;
         }
-        if (alllife[i].jumpbreak > 200) {
-            alllife[i].jump = true;
-            alllife[i].jumpdirection = random(-1, 1);
-            alllife[i].jumpforceX = random(0.5, 1.5);
-            alllife[i].jumpforceY = random(-20, -15);
-            alllife[i].startheight = alllife[i].y;
-            alllife[i].jumpbreak = 0;
+        if (deployBreak > 50) {
+            newdeploy = false;
+            deployBreak = 0;
         }
-        if (alllife[i].lately_reproduction == true) {
-            alllife[i].reproductionbreak++;
+        for (var i = 0; i < alllife.length; i++) {
+            alllife[i].display();
+            alllife[i].lifetime++;
+            alllife[i].hp -= 0.05 + alllife.length * 0.001;
+            alllife[i].hunger -= 0.05;
+            alllife[i].move();
+            alllife[i].step();
+            if (alllife[i].jump == false) {
+                alllife[i].jumpbreak++;
+            }
+            if (alllife[i].jumpbreak > 200) {
+                alllife[i].jump = true;
+                alllife[i].jumpdirection = random(-1, 1);
+                alllife[i].jumpforceX = random(0.5, 1.5);
+                alllife[i].jumpforceY = random(-20, -15);
+                alllife[i].startheight = alllife[i].y;
+                alllife[i].jumpbreak = 0;
+            }
+            if (alllife[i].lately_reproduction == true) {
+                alllife[i].reproductionbreak++;
+            }
+            if (alllife[i].reproductionbreak > 400) {
+                alllife[i].lately_reproduction = false;
+                alllife[i].reproductionbreak = 0;
+            }
+            if (alllife[i].hp <= 0) {
+                alllife.splice(i, 1);
+            }
         }
-        if (alllife[i].reproductionbreak > 400) {
-            alllife[i].lately_reproduction = false;
-            alllife[i].reproductionbreak = 0;
-        }
-        if (alllife[i].hp <= 0) {
-            alllife.splice(i, 1);
-        }
-    }
-    let closeSlimes = findCloseSlimes();
-    for (let i = 0; i < closeSlimes.length; i += 2) {
-        if (closeSlimes[i].lately_reproduction == false && closeSlimes[i + 1].lately_reproduction == false && closeSlimes[i].lifetime > 600 && closeSlimes[i + 1].lifetime > 600) {
-            let new_name = name(2, closeSlimes[i].name[0] + closeSlimes[i + 1].name[0] + '.')
-            alllife.push(new creature((closeSlimes[i].x + closeSlimes[i + 1].x) / 2, closeSlimes[i].y, 1, closeSlimes[i].r, closeSlimes[i + 1].g, (closeSlimes[i].b + closeSlimes[i + 1].b) / 2, new_name));
-            closeSlimes[i].lately_reproduction = true;
-            closeSlimes[i + 1].lately_reproduction = true;
+        let closeSlimes = findCloseSlimes();
+        for (let i = 0; i < closeSlimes.length; i += 2) {
+            if (closeSlimes[i].lately_reproduction == false && closeSlimes[i + 1].lately_reproduction == false && closeSlimes[i].lifetime > 600 && closeSlimes[i + 1].lifetime > 600) {
+                let new_name = name(2, closeSlimes[i].name[0] + closeSlimes[i + 1].name[0] + '.')
+                alllife.push(new creature((closeSlimes[i].x + closeSlimes[i + 1].x) / 2, closeSlimes[i].y, 1, closeSlimes[i].r, closeSlimes[i + 1].g, (closeSlimes[i].b + closeSlimes[i + 1].b) / 2, new_name));
+                closeSlimes[i].lately_reproduction = true;
+                closeSlimes[i + 1].lately_reproduction = true;
+            }
         }
     }
 
