@@ -3,6 +3,9 @@ var img;
 var gameStarted = false; // Track game state
 var startButton;
 var startSlime; // Store the start slime
+var foods = []; // Array to store food objects
+var foodBreak = 0; // Track food deployment
+var recentFood = false; // Track recent food deployment
 function preload() {
     print("lo123123ed");
     img = loadImage('img.png');
@@ -190,7 +193,36 @@ function findCloseSlimes() {
     }
     return closeSlimes;
 }
+class Food {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 10;
+        this.lifetime = 0;
+    }
 
+    display() {
+        fill("gold"); // Red color for food
+        noStroke();
+        // Draw pixel ball
+        for (let i = 0; i < this.radius * 2; i++) {
+            for (let j = 0; j < this.radius * 2; j++) {
+                if (dist(i, j, this.radius, this.radius) < this.radius) {
+                    rect(this.x + i - this.radius, this.y + j - this.radius, 1, 1);
+                }
+            }
+        }
+    }
+
+    checkCollision(creature) {
+        let distance = dist(this.x, this.y, creature.x, creature.y);
+        if (distance < this.radius + creature.size * 75 / 2) {
+            creature.hp += 20; // Increase creature's hp
+            return true;
+        }
+        return false;
+    }
+}
 
 function draw() {
     background(255);
@@ -198,16 +230,21 @@ function draw() {
     image(img, 400, 250, 800, 500);
     if (!gameStarted) {
         textFont(myfont);
-        textSize(20);
-        fill(0);
-        text("Press b to create a slime", 15, 30);
-        text("Remember: the more slimes you have, the faster they die", 15, 50)
-        text("New slimes will inherit the name and color from both of their parents", 15, 70);
-        text("current slimes: " + alllife.length, 15, 90);
-        startSlime = new Creature(400, 300, 1, 0, 255, 0, "PIXEL");
-        startSlime.display();
+        textSize(50);
+        fill("gold");
+        text("Press b to create a slime", 100, 80);
+        text("Click mouse to provide food", 100, 140);
+        text("Observe how their family develop", 50, 200);
+        //text("New slimes will inherit the name and color from both of their parents", 50, 220);
+        //startSlime = new Creature(400, 300, 1, 0, 255, 0, "PIXEL");
+        //startSlime.display();
     }
     else {
+        textFont(myfont);
+        textSize(20);
+        fill(0);
+        text("current slimes: " + alllife.length, 15, 90);
+        //text(foodBreak, 15, 110);
         if (keyIsPressed === true)
             if (key == 'b' && newdeploy == false) {
                 r = random(255);
@@ -251,6 +288,7 @@ function draw() {
                 alllife[i].reproductionbreak = 0;
             }
             if (alllife[i].hp <= 0) {
+                foods.push(new Food(alllife[i].x, alllife[i].y));
                 alllife.splice(i, 1);
             }
         }
@@ -263,6 +301,31 @@ function draw() {
                 closeSlimes[i + 1].lately_reproduction = true;
             }
         }
+        // Deploy food
+        for (let i = foods.length - 1; i >= 0; i--) {
+            foods[i].display();
+            if (foods[i].y < 250) {
+                foods[i].y += 5;
+            }
+            foods[i].lifetime++;
+            if (foods[i].lifetime > 300) {
+                foods.splice(i, 1);
+                continue;
+            }
+            // Check collision with each creature
+            for (let j = 0; j < alllife.length; j++) {
+                if (foods[i].checkCollision(alllife[j])) {
+                    foods.splice(i, 1); // Remove food if consumed
+                    break; // Exit the loop after collision detected
+                }
+            }
+        }
     }
 
+}
+function mouseClicked() {
+    if (gameStarted) {
+        // Add food at mouse click location
+        foods.push(new Food(mouseX, mouseY));
+    }
 }
