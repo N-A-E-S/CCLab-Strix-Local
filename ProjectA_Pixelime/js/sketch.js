@@ -243,6 +243,7 @@ function draw() {
         textFont(myfont);
         textSize(20);
         fill(0);
+        text("Press b to create a slime", 10, 70);
         text("current slimes: " + alllife.length, 15, 90);
         //text(foodBreak, 15, 110);
         if (keyIsPressed === true)
