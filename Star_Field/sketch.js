@@ -1,8 +1,16 @@
 var currentSystem;
+var curlayer = 0;
+var height = 800;
+var layerSwitchPause = 0;
+var recentLayerSwitch = false;
+let cam;
+let angle = 0;
+let keys = {};
 syslis = [];
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, windowHeight, WEBGL);
   noStroke();
+  //ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 2000);
   while (syslis.length < 50) {
     let x = random(width);
     let y = random(height);
@@ -31,19 +39,78 @@ function setup() {
   }
   currentSystem = syslis[0];
   currentSystem.current = true;
+  cam = createCamera();
+  cam.move(200, -100, 200); // 初始摄像机位置
 }
 function draw() {
   background(0);
-  drawGalaxy();
-  if (mouseIsPressed) {
-    for (i in syslis) {
-      if (syslis[i].state == 'selected') {
-        if (currentSystem.road.includes(i) || currentSystem == syslis[i]) {
-          jumpto(syslis[i]);
-        }
+  if (keyIsPressed) {
+    if (key == 'm') {
+      if (recentLayerSwitch == false) {
+        recentLayerSwitch = true;
+        curlayer++;
       }
     }
   }
+  if (recentLayerSwitch == true) {
+    layerSwitchPause++;
+    //console.log(curlayer,recentLayerSwitch, layerSwitchPause)
+  }
+  if (layerSwitchPause > 20) {
+    recentLayerSwitch = false;
+    layerSwitchPause = 0;
+  }
+  if (curlayer > 2) {
+    curlayer = 0;
+  }
+  if (curlayer == 0) {
+    camera();
+    translate(-width / 2, -height / 2)
+    push();
+    drawGalaxy();
+    if (mouseIsPressed) {
+      for (i in syslis) {
+        if (syslis[i].state == 'selected') {
+          if (currentSystem.road.includes(i) || currentSystem == syslis[i]) {
+            jumpto(syslis[i]);
+          }
+        }
+      }
+    }
+    pop()
+  }
+  else
+    if (curlayer == 1) {
+      background(0);
+      if (mouseIsPressed) {
+        orbitControl();
+      }
+      let speed = 5;
+      if (keys['w']) {
+        cam.move(0, 0, -speed);
+      }
+      if (keys['s']) {
+        cam.move(0, 0, speed);
+      }
+      if (keys['a']) {
+        cam.move(-speed, 0, 0);
+      }
+      if (keys['d']) {
+        cam.move(speed, 0, 0);
+      }
+      if (keys[' ']) {
+        cam.move(0, -speed, 0);
+      }
+      if (keys['control']) {
+        cam.move(0, speed, 0);
+      }
+      ambientLight(100, 100, 100);
+      let sunPosition = createVector(0, -200, 0);
+      pointLight(255, 155, 0, sunPosition.x, sunPosition.y, sunPosition.z);
+
+      drawGridFloor();
+      drawSun(sunPosition, 1);
+    }
 }
 
 function drawGalaxy() {
@@ -51,23 +118,20 @@ function drawGalaxy() {
   let centerX = width / 2;
   let centerY = height / 2;
   // 绘制中央星团
-  let gradient = drawingContext.createRadialGradient(
-    width / 2, height / 2, 0, // 渐变中心坐标
-    width / 2, height / 2, 80 // 渐变半径
-  )
-  gradient.addColorStop(0, 'rgb(200,200,200)') // 渐变起始颜色
-  gradient.addColorStop(1, 'rgb(0,0,0)') // 渐变终止颜色
-  drawingContext.fillStyle = gradient
-  circle(centerX, centerY, 200)
-  let gradient2 = drawingContext.createRadialGradient(
-    width / 2, height / 2, 0, // 渐变中心坐标
-    width / 2, height / 2, 30 // 渐变半径
-  )
-  gradient2.addColorStop(1, 'rgb(120,120,120)') // 渐变起始颜色
-  gradient2.addColorStop(0, 'rgb(0,0,0)') // 渐变终止颜色
-  drawingContext.fillStyle = gradient2
-  //fill()
-  circle(centerX, centerY, 60)
+  let startcolor = color(255, 255, 255)
+  let endcolor = color(0, 0, 0)
+  for (let r = 80; r > 0; r--) {
+    let c = lerpColor(startcolor, endcolor, r / (80));
+    fill(c)
+    ellipse(centerX, centerY, r * 2);
+  }
+  let startcolor2 = color(0, 0, 0)
+  let endcolor2 = color(120, 120, 120)
+  for (let r = 40; r > 0; r--) {
+    let c = lerpColor(startcolor2, endcolor2, r / (40));
+    fill(c)
+    ellipse(centerX, centerY, r * 2);
+  }
   // 绘制星系
   for (let i = 0; i < syslis.length; i++) {
     syslis[i].draw();
@@ -104,7 +168,7 @@ class system {
     }
     let centerColor = color(200);
     let outerColor = color(0);
-    for (let r = 0; r < 5; r++) {
+    for (let r = 3; r > 0; r--) {
       let c = lerpColor(centerColor, outerColor, r / (10));
       fill(c)
       //noFill();
@@ -125,4 +189,35 @@ function jumpto(destination) {
   currentSystem.current = false;
   currentSystem = destination;
   currentSystem.current = true;
+}
+function keyPressed() {
+  keys[key.toLowerCase()] = true;
+}
+
+function keyReleased() {
+  keys[key.toLowerCase()] = false;
+}
+
+function drawGridFloor() {
+  noStroke();
+  stroke(150);
+  let spacing = 20;
+  let numLines = 50;
+  for (let i = -numLines; i < numLines; i++) {
+    line(i * spacing, 0, -numLines * spacing, i * spacing, 0, numLines * spacing);
+    line(-numLines * spacing, 0, i * spacing, numLines * spacing, 0, i * spacing);
+  }
+}
+
+function drawSun(position, size) {
+  push();
+  translate(position.x, position.y, position.z);
+  // 光晕
+  noStroke();
+  fill(255, 140, 0, 100);
+  sphere(300 * size);
+  // 太阳
+  fill(255, 104, 0);
+  sphere(150 * size);
+  pop();
 }
