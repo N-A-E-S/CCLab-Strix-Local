@@ -3,6 +3,7 @@ let angle = 0;
 let keys = {};
 let img;
 let p = []
+
 function preload() {
   solarimg = loadImage('solar.png');
   img = loadImage('planet3.png');
@@ -91,7 +92,7 @@ function drawSun(position, size) {
   translate(position.x, position.y, position.z);
   noStroke();
   sphere(150 * size);
-  fill(255, 155, 0, 60);
+  fill(255, 155, 0, 10);
   sphere(300 * size);
   pop();
 }
@@ -102,7 +103,7 @@ class planet {
     this.img = img;
     this.angle = angle;
     this.rotateSpeed = rotateSpeed;
-
+    this.state = 'unselected';
   }
   drawPlanet() {
     push();
