@@ -17,6 +17,14 @@ let camdx = 0;
 let camdy = 1;
 let camdz = 0;
 let curPlanet;
+let shipX = 0;
+let shipY = 0;
+let shipZ = 0;
+let prevMouseX, prevMouseY;
+let modelRotationY = 0;
+var cameraAngleX = 0;
+var cameraAngleY = 0;
+var camDistance = 300;
 //let div = document.getElementById('infoDiv');
 function preload() {
   solarimg = loadImage('assest/texture/solar.png');
@@ -31,11 +39,22 @@ function preload() {
   img9 = loadImage('assest/texture/planet9.png');
   img10 = loadImage('assest/texture/planet10.png');
   img11 = loadImage('assest/texture/planet11.png');
+  img12 = loadImage('assest/texture/planet12.png');
+  img13 = loadImage('assest/texture/planet13.png');
+  img14 = loadImage('assest/texture/planet14.png');
+  img15 = loadImage('assest/texture/planet15.png');
+  img16 = loadImage('assest/texture/planet16.png');
+  img17 = loadImage('assest/texture/planet17.png');
+  img18 = loadImage('assest/texture/planet18.png');
+  img19 = loadImage('assest/texture/planet19.png');
+  img20 = loadImage('assest/texture/planet20.png');
+  sysname = loadStrings('assest/sysname.txt');
+  shipmodel = loadModel('assest/ISS-0-MODEL_export.obj');
+  //console.log(sysname)
 }
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
   noStroke();
-  //ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 2000);
   while (syslis.length < 50) {
     let x = random(width);
     let y = random(height);
@@ -48,7 +67,7 @@ function setup() {
         }
       }
       if (avaliable) {
-        syslis.push(new system(x, y));
+        syslis.push(new system(x, y, sysname[syslis.length]));
       }
     }
   }
@@ -76,7 +95,7 @@ function setup() {
         random(-250, -150),
         radius * sin(angle)
       );
-      let img = eval('img' + str(int(random(1, 12))));
+      let img = eval('img' + str(int(random(1, 21))));
       let rotateSpeed = random(0.001, 0.005);
       let size = random(0.5, 0.75) + j * 0.15;
       let np = new planet(planetPosition, size, img, rotateSpeed, 0);
@@ -88,8 +107,16 @@ function setup() {
   currentSystem.current = true;
   cam = createCamera();
   cam.move(200, -100, 200);
+  prevMouseX = mouseX;
+  prevMouseY = mouseY;
+  canvas.addEventListener('mousedown', function (event) {
+    event.preventDefault();
+  });
 }
-createDiv();
+div1 = createDiv();
+div2 = createDiv(300, 50, 'infoDiv2', 300, 50);
+div3 = createDiv(450, 50, 'infoDiv3', 300, 50);
+
 function draw() {
   background(0);
   if (keyIsPressed) {
@@ -121,6 +148,8 @@ function draw() {
     curlayer = 0;
   }
   if (curlayer == 0) {
+    document.getElementById('infoDiv3').innerHTML = ' ';
+    document.getElementById('infoDiv2').innerHTML = 'current system: ' + currentSystem.name;
     document.getElementById('infoDiv').innerHTML = 'Select a system to travel to by clicking on it, press "m" to go into the system';
     camera(0, 0, 800, 0, 0, 0, 0, 1, 0);
     translate(-width / 2, -height / 2)
@@ -140,8 +169,12 @@ function draw() {
   else
     if (curlayer == 1) {
       //document.getElementById('infoDiv').style.display = 'fixed';
-      if (recentLayerSwitch == true)
+      if (recentLayerSwitch == true) {
         camera(camX, camY, camZ, camlookX, camlookY, camlookZ, camdx, camdy, camdz);
+        shipX = camX;
+        shipY = camY;
+        shipZ = camZ;
+      }
       else {
         camX = cam.eyeX;
         camY = cam.eyeY;
@@ -159,11 +192,14 @@ function draw() {
       let sunPosition = createVector(0, -200, 0);
       pointLight(255, 155, 0, sunPosition.x, sunPosition.y, sunPosition.z);
       drawGridFloor();
+      noStroke();
       for (let i = 0; i < currentSystem.planetlist.length; i++) {
         currentSystem.planetlist[i].update();
         if (currentSystem.planetlist[i].state == 'selected') {
           curPlanet = currentSystem.planetlist[i];
-          document.getElementById('infoDiv').innerHTML = 'Planet ' + i + ' selected, press "m" to land on the planet or "n" to go back to the system view' + '/n' + 'Press "w" "a" "s" "d" "space" "ctrl" to move the camera';
+          RomeIndex = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII'];
+          let index = RomeIndex[i];
+          document.getElementById('infoDiv').innerHTML = currentSystem.name + index + ' selected, press "m" to land on the planet or "n" to go back to the system view';
           for (let j = 0; j < currentSystem.planetlist.length; j++) {
             if (j != i) {
               currentSystem.planetlist[j].state = 'unselected';
@@ -173,18 +209,29 @@ function draw() {
         }
         else {
           document.getElementById('infoDiv').innerHTML = 'No planet selected, go closer to a planet to select it';
+          document.getElementById('infoDiv3').innerHTML = 'Use "WASD" to move the ship and "Q" and "E" to rotate the ship. Press "Space" to move up and "Ctrl" to move down.';
         }
       }
       drawSun(sunPosition, currentSystem.solarsize);
       for (let i = 0; i < currentSystem.planetlist.length; i++) {
         currentSystem.planetlist[i].drawPlanet();
       }
+      push();
+      translate(shipX, shipY, shipZ);
+      rotateY(modelRotationY);
+      rotateX(PI);
+      scale(0.5);
+      stroke(100);
+      updateCam();
+      strokeWeight(0.25);
+      fill(200);
+      model(shipmodel);
+      pop();
 
     }
     else
       if (curlayer == 2) {
-        //document.getElementById('infoDiv').style.display = 'fixed';
-        keyboadControl();
+        keyboardCamControl();
         if (recentLayerSwitch == true)
           camera(0, -200, 800, 0, 0, 0, 0, 1, 0);
         if (curPlanet == undefined) {
@@ -231,7 +278,8 @@ function draw() {
             }
           }
         }
-
+        noStroke();
+        noFill();
       }
 }
 function displayPlanetInfo(info) {
@@ -248,12 +296,11 @@ function manualOrbitControl() {
   cam.pan(dx);
   cam.tilt(dy);
 }
-function keyboadControl() {
+function keyboardCamControl() {
+  let speed = 3;
   if (mouseIsPressed) {
-    //cam.setPosition(camX, camY, camZ);
     manualOrbitControl();
   }
-  let speed = 10;
   if (keys['w']) {
     cam.move(0, 0, -speed);
   }
@@ -272,6 +319,54 @@ function keyboadControl() {
   if (keys['control']) {
     cam.move(0, speed, 0);
   }
+}
+function keyboadControl() {
+  let speed = 3;
+  if (keys['w']) {
+    //cam.move(0, 0, -speed);
+    shipZ -= speed * cos(modelRotationY);
+    shipX -= speed * sin(modelRotationY);
+  }
+  if (keys['s']) {
+    //cam.move(0, 0, speed);
+    shipZ += speed * cos(modelRotationY);
+    shipX += speed * sin(modelRotationY);
+  }
+  if (keys['a']) {
+    //cam.move(-speed, 0, 0);
+    shipX -= speed * cos(modelRotationY);
+    shipZ += speed * sin(modelRotationY);
+  }
+  if (keys['d']) {
+    //cam.move(speed, 0, 0);
+    shipX += speed * cos(modelRotationY);
+    shipZ -= speed * sin(modelRotationY);
+  }
+  if (keys[' ']) {
+    //cam.move(0, -speed, 0);
+    shipY -= speed;
+  }
+  if (keys['control']) {
+    //cam.move(0, speed, 0);
+    shipY += speed;
+  }
+  if (keys['q']) {
+    modelRotationY += 0.01;
+  }
+  if (keys['e']) {
+    modelRotationY -= 0.01;
+  }
+}
+function updateCam() {
+  if (mouseIsPressed) {
+    cameraAngleY += (mouseX - pmouseX) * 0.01;
+    cameraAngleX += (mouseY - pmouseY) * 0.01;
+  }
+  let camX = shipX + camDistance * sin(cameraAngleY) * cos(cameraAngleX);
+  let camY = shipY - camDistance * sin(cameraAngleX);
+  let camZ = shipZ - camDistance * cos(cameraAngleY) * cos(cameraAngleX);
+  cam.setPosition(camX, camY, camZ);
+  cam.lookAt(shipX, shipY, shipZ);
 }
 function drawGalaxy() {
   let centerX = width / 2;
@@ -303,7 +398,7 @@ function drawGalaxy() {
   }
 }
 class system {
-  constructor(x, y, solarsize, planetlist) {
+  constructor(x, y, name, solarsize, planetlist) {
     this.x = x;
     this.y = y;
     this.size = 7;
@@ -312,6 +407,7 @@ class system {
     this.current = false;
     this.solarsize = solarsize;
     this.planetlist = planetlist;
+    this.name = name;
   }
 
   draw() {
@@ -365,7 +461,7 @@ function keyReleased() {
 }
 
 function drawGridFloor() {
-  noStroke();
+  push();
   stroke(150);
   let spacing = 20;
   let numLines = 80;
@@ -373,6 +469,7 @@ function drawGridFloor() {
     line(i * spacing, 0, -numLines * spacing, i * spacing, 0, numLines * spacing);
     line(-numLines * spacing, 0, i * spacing, numLines * spacing, 0, i * spacing);
   }
+  pop();
 }
 
 function drawSun(position, size) {
@@ -413,7 +510,7 @@ class planet {
     pop();
   }
   update() {
-    if (dist(cam.eyeX, cam.eyeY, cam.eyeZ, this.position.x, this.position.y, this.position.z) < 300) {
+    if (dist(shipX, shipY, shipZ, this.position.x, this.position.y, this.position.z) < 300) {
       this.state = 'selected';
     }
     else {
@@ -423,18 +520,18 @@ class planet {
 }
 
 // create an HTML element
-function createDiv() {
+function createDiv(posx = 50, posy = 50, id = 'infoDiv', width = 300, height = 200) {
   let div = document.createElement('div');
   document.body.appendChild(div);
 
-  div.id = 'infoDiv';
+  div.id = id;
 
-  div.style.width = '300px';
-  div.style.height = '200px';
+  div.style.width = width + 'px';
+  div.style.height = height + 'px';
 
   div.style.position = 'fixed';
-  div.style.bottom = '50px';
-  div.style.right = '50px';
+  div.style.bottom = posx + 'px';
+  div.style.right = posy + 'px';
 
   div.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
   //div.style.backgroundColor = 'yellow';
