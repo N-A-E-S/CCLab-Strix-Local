@@ -101,7 +101,6 @@ function setup() {
       let np = new planet(planetPosition, size, img, rotateSpeed, 0);
       syslis[i].planetlist.push(np);
     }
-    //syslis[i].planetlist[0].state = 'selected';
   }
   currentSystem = syslis[0];
   currentSystem.current = true;
@@ -112,10 +111,13 @@ function setup() {
   canvas.addEventListener('mousedown', function (event) {
     event.preventDefault();
   });
+  document.addEventListener('wheel', function (event) {
+    handleMouseWheel(event);
+  });
 }
 div1 = createDiv();
 div2 = createDiv(300, 50, 'infoDiv2', 300, 50);
-div3 = createDiv(450, 50, 'infoDiv3', 300, 50);
+div3 = createDiv(450, 50, 'infoDiv3', 300, 150);
 
 function draw() {
   background(0);
@@ -231,9 +233,24 @@ function draw() {
     }
     else
       if (curlayer == 2) {
+        if (recentLayerSwitch == true) {
+          shipX = 0
+          shipY = -400;
+          shipZ = 0;
+        }
+        push();
+        translate(shipX, shipY, shipZ);
+        // rotateY(modelRotationY);
+        scale(5);
+        rotateX(PI);
+        stroke(100);
+        strokeWeight(0.25);
+        fill(200);
+        model(shipmodel);
+        pop();
         keyboardCamControl();
         if (recentLayerSwitch == true)
-          camera(0, -200, 800, 0, 0, 0, 0, 1, 0);
+          camera(0, -400, 100, 0, 0, 0, 0, 1, 0);
         if (curPlanet == undefined) {
           curlayer = 1;
         }
@@ -255,6 +272,7 @@ function draw() {
               }
             }
           }
+          landingHeight = curPlanet.mapheight[0][0];
           let step = 300;
           stroke(255);
           strokeWeight(0.3);
@@ -277,10 +295,23 @@ function draw() {
               endShape();
             }
           }
+          if (shipY < -(landingHeight + 50)) {
+            shipY += 3;
+            cam.move(0, 3, 0);
+          }
         }
         noStroke();
         noFill();
       }
+}
+function handleMouseWheel(event) {
+  let zoomSensitivity = 0.1;
+  if (event.deltaY < 0) {
+    camDistance -= zoomSensitivity * 100;
+  } else {
+    camDistance += zoomSensitivity * 100;
+  }
+  camDistance = constrain(camDistance, 100, 2000);
 }
 function displayPlanetInfo(info) {
   push();
@@ -323,31 +354,25 @@ function keyboardCamControl() {
 function keyboadControl() {
   let speed = 3;
   if (keys['w']) {
-    //cam.move(0, 0, -speed);
     shipZ -= speed * cos(modelRotationY);
     shipX -= speed * sin(modelRotationY);
   }
   if (keys['s']) {
-    //cam.move(0, 0, speed);
     shipZ += speed * cos(modelRotationY);
     shipX += speed * sin(modelRotationY);
   }
   if (keys['a']) {
-    //cam.move(-speed, 0, 0);
     shipX -= speed * cos(modelRotationY);
     shipZ += speed * sin(modelRotationY);
   }
   if (keys['d']) {
-    //cam.move(speed, 0, 0);
     shipX += speed * cos(modelRotationY);
     shipZ -= speed * sin(modelRotationY);
   }
   if (keys[' ']) {
-    //cam.move(0, -speed, 0);
     shipY -= speed;
   }
   if (keys['control']) {
-    //cam.move(0, speed, 0);
     shipY += speed;
   }
   if (keys['q']) {
@@ -541,8 +566,6 @@ function createDiv(posx = 50, posy = 50, id = 'infoDiv', width = 300, height = 2
   // add html text to the div
   div.innerHTML = 'Distance: 100m';
 }
-
-let isShowing = true;
 //function mousePressed() {
 //document.getElementById('infoDiv').innerHTML = 'Yay!';
 //let div = document.getElementById('infoDiv');
