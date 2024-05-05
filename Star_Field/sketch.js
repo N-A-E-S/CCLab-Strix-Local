@@ -25,6 +25,7 @@ let modelRotationY = 0;
 var cameraAngleX = 0;
 var cameraAngleY = 0;
 var camDistance = 300;
+let featurelib = ['mountain', 'lake', 'forest', 'desert', 'volcano', 'ocean']
 //let div = document.getElementById('infoDiv');
 function preload() {
   solarimg = loadImage('assest/texture/solar.png');
@@ -100,6 +101,13 @@ function setup() {
       let size = random(0.5, 0.75) + j * 0.15;
       let np = new planet(planetPosition, size, img, rotateSpeed, 0);
       syslis[i].planetlist.push(np);
+      featurenum = int(random(0, 6));
+      for (let k = 0; k < featurenum; k++) {
+        let feature = random(featurelib);
+        np.feature.push(feature);
+        let featurePosition = createVector(random(-4000, 4000), -5, random(-4000, 4000));
+        np.featurePositions.push(featurePosition);
+      }
     }
   }
   currentSystem = syslis[0];
@@ -223,9 +231,9 @@ function draw() {
       rotateY(modelRotationY);
       rotateX(PI);
       scale(0.5);
-      stroke(100);
+      stroke(150);
       updateCam();
-      strokeWeight(0.25);
+      strokeWeight(0.05);
       fill(200);
       model(shipmodel);
       pop();
@@ -243,8 +251,8 @@ function draw() {
         // rotateY(modelRotationY);
         scale(5);
         rotateX(PI);
-        stroke(100);
-        strokeWeight(0.25);
+        stroke(150);
+        strokeWeight(0.05);
         fill(200);
         model(shipmodel);
         pop();
@@ -295,13 +303,14 @@ function draw() {
               endShape();
             }
           }
-          if (shipY < -(landingHeight + 50)) {
+          if (shipY < -(landingHeight + 15)) {
             shipY += 3;
             cam.move(0, 3, 0);
           }
         }
         noStroke();
         noFill();
+        curPlanet.drawFeatures();
       }
 }
 function handleMouseWheel(event) {
@@ -362,24 +371,16 @@ function keyboadControl() {
     shipX += speed * sin(modelRotationY);
   }
   if (keys['a']) {
-    shipX -= speed * cos(modelRotationY);
-    shipZ += speed * sin(modelRotationY);
+    modelRotationY += 0.02;
   }
   if (keys['d']) {
-    shipX += speed * cos(modelRotationY);
-    shipZ -= speed * sin(modelRotationY);
+    modelRotationY -= 0.02;
   }
   if (keys[' ']) {
     shipY -= speed;
   }
   if (keys['control']) {
     shipY += speed;
-  }
-  if (keys['q']) {
-    modelRotationY += 0.01;
-  }
-  if (keys['e']) {
-    modelRotationY -= 0.01;
   }
 }
 function updateCam() {
@@ -518,6 +519,8 @@ class planet {
     this.state = 'unselected';
     this.mapheight = [];
     this.noisevals = [];
+    this.feature = [];
+    this.featurePositions = [];
   }
   drawPlanet() {
     push();
@@ -540,6 +543,64 @@ class planet {
     }
     else {
       this.state = 'unselected';
+    }
+  }
+  drawFeatures() {
+    for (let i = 0; i < this.feature.length; i++) {
+      push();
+      let featureType = this.feature[i];
+      let pos = this.featurePositions[i];
+      translate(pos.x, pos.y, pos.z);
+      switch (featureType) {
+        case 'mountain':
+          fill(150, 150, 150);
+          push();
+          translate(0, -200, 0);
+          rotateX(PI);
+          cone(100, 500);
+          pop();
+          break;
+        case 'lake':
+          fill(50, 50, 255);
+          push();
+          rotateX(PI / 2);
+          ellipse(0, 0, 200, 100);
+          pop();
+          break;
+        case 'forest':
+          fill(0, 128, 0);
+          for (let j = 0; j < 10; j++) {
+            push();
+            translate(random(-10, 10), -40, random(-10, 10));
+            rotateX(PI);
+            cone(50, 30);
+            pop();
+          }
+          break;
+        case 'desert':
+          fill(233, 221, 109);
+          push();
+          rotateX(PI / 2);
+          ellipse(0, 0, 40, 20);
+          pop();
+          break;
+        case 'volcano':
+          push();
+          translate(0, -150, 0);
+          rotateX(PI);
+          fill(128, 0, 0);
+          cone(150, 250);
+          pop();
+          break;
+        case 'ocean':
+          fill(0, 105, 148);
+          push();
+          rotateX(PI / 2);
+          ellipse(0, 0, 500, 250);
+          pop();
+          break;
+      }
+      pop();
     }
   }
 }
