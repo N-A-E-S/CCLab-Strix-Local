@@ -563,6 +563,7 @@ class planet {
         case 'lake':
           fill(50, 50, 255);
           push();
+          translate(0, -15, 0);
           rotateX(PI / 2);
           ellipse(0, 0, 200, 100);
           pop();
@@ -571,7 +572,7 @@ class planet {
           fill(0, 128, 0);
           for (let j = 0; j < 10; j++) {
             push();
-            translate(random(-10, 10), -40, random(-10, 10));
+            translate(random(-30, 30), -40, random(-30, 30));
             rotateX(PI);
             cone(50, 30);
             pop();
@@ -580,6 +581,7 @@ class planet {
         case 'desert':
           fill(233, 221, 109);
           push();
+          translate(0, -15, 0);
           rotateX(PI / 2);
           ellipse(0, 0, 40, 20);
           pop();
@@ -595,6 +597,7 @@ class planet {
         case 'ocean':
           fill(0, 105, 148);
           push();
+          translate(0, -15, 0);
           rotateX(PI / 2);
           ellipse(0, 0, 500, 250);
           pop();
