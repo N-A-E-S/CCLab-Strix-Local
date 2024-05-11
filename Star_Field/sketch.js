@@ -122,6 +122,11 @@ function setup() {
   document.addEventListener('wheel', function (event) {
     handleMouseWheel(event);
   });
+  window.addEventListener("gamepadconnected", function (e) {
+    console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+      e.gamepad.index, e.gamepad.id,
+      e.gamepad.buttons.length, e.gamepad.axes.length);
+  });
 }
 div1 = createDiv();
 div2 = createDiv(300, 50, 'infoDiv2', 300, 50);
@@ -198,6 +203,57 @@ function draw() {
       }
       background(0);
       keyboadControl();
+      let gamepads = navigator.getGamepads(); // 获取所有连接的手柄
+      if (gamepads[0]) {
+        let pad = gamepads[0]; // 假设Xbox手柄是第一个连接的设备
+
+        // 读取手柄的摇杆和按钮状态
+        let leftX = pad.axes[0];
+        let leftY = pad.axes[1];
+        let rightX = pad.axes[2];
+        let rightY = pad.axes[3];
+
+        let buttonA = pad.buttons[0].pressed; // A按钮
+        let buttonB = pad.buttons[1].pressed; // B按钮
+        let buttonX = pad.buttons[2].pressed; // X按钮
+        let buttonY = pad.buttons[3].pressed; // Y按钮
+        if (leftX > 0.1 || leftX < -0.1 || leftY > 0.1 || leftY < -0.1) {
+          // 使用手柄控制飞船移动
+          if (leftY < -0.1) { // 向前
+            shipZ -= 3 * cos(modelRotationY);
+            shipX -= 3 * sin(modelRotationY);
+          }
+          if (leftY > 0.1) { // 向后
+            shipZ += 3 * cos(modelRotationY);
+            shipX += 3 * sin(modelRotationY);
+          }
+          if (leftX < -0.1) { // 左转
+            modelRotationY += 0.02;
+          }
+          if (leftX > 0.1) { // 右转
+            modelRotationY -= 0.02;
+          }
+
+          // 使用手柄控制飞船上下移动
+          if (buttonB) { // 向上
+            shipY -= 3;
+          }
+          if (buttonA) { // 向下
+            shipY += 3;
+          }
+        }
+        let rightpadX = pad.axes[2];
+        let rightpadY = pad.axes[3];
+        if (rightpadX > 0.1 || rightpadX < -0.1 || rightpadY > 0.1 || rightpadY < -0.1) {
+          cameraAngleY += rightpadX * 0.1;
+          cameraAngleX += rightpadY * 0.1;
+        }
+        let camX = shipX + camDistance * sin(cameraAngleY) * cos(cameraAngleX);
+        let camY = shipY - camDistance * sin(cameraAngleX);
+        let camZ = shipZ - camDistance * cos(cameraAngleY) * cos(cameraAngleX);
+        cam.setPosition(camX, camY, camZ);
+        cam.lookAt(shipX, shipY, shipZ);
+      }
       ambientLight(200, 200, 180);
       let sunPosition = createVector(0, -200, 0);
       pointLight(255, 155, 0, sunPosition.x, sunPosition.y, sunPosition.z);
